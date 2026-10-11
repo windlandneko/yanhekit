@@ -17,6 +17,7 @@ from werkzeug.exceptions import HTTPException
 from werkzeug.serving import make_server
 
 import download
+import eclass
 import transcript
 from auth import SignIn, SignInError, saved_password, saved_username
 
@@ -220,6 +221,8 @@ def serve(client, workspace=None, course_id=None):
       if course_id:
         show_course(client.course(course_id))
     state.update(stage='done', captcha=None)
+    if getattr(client, '_capture_eclass', False):
+      eclass.capture()
 
   def show_course(course):
     """Publish the replay list merged with what course.json records as downloaded."""

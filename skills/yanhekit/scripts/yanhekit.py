@@ -2,6 +2,7 @@
 # requires-python = '>=3.11'
 # dependencies = [
 #   'beautifulsoup4>=4.12',
+#   'browser-cookie3>=0.19',
 #   'flask>=3.1',
 #   'img2pdf>=0.6',
 #   'keyring>=25',
@@ -24,17 +25,20 @@ from pathlib import Path
 import requests
 
 import download
+import eclass
 import transcribe
 import transcript
 from client import STREAMS, APIError, Yanhekt, course_id, describe, upgrade_to_campus
 
 
-def signed_in():
+def signed_in(capture_eclass=False):
   client = Yanhekt()
   if not client.authenticate():
     import server  # Flask and the sign-in stack load only when the page is needed
 
     server.serve(client)
+  if capture_eclass:
+    eclass.capture()
   return client
 
 
@@ -84,7 +88,14 @@ def absolute(value):
 def parse():
   parser = argparse.ArgumentParser(description=__doc__)
   commands = parser.add_subparsers(dest='command', required=True)
-  commands.add_parser('login', help='Sign in through the local page unless the saved session is still valid')
+  login = commands.add_parser('login', help='Sign in through the local page unless the saved session is still valid')
+  login.add_argument(
+    '--eclass',
+    dest='capture_eclass',
+    default=True,
+    action=argparse.BooleanOptionalAction,
+    help='Check saved eclass cookies or import an existing Chrome session (default: enabled)',
+  )
   listing = commands.add_parser('courses', help='List enrolled courses by term: id, title, teacher')
   listing.add_argument('--term', help='Only this term, such as 2026-2027-1')
   replays = commands.add_parser('lectures', help='List a course’s replays: lecture ID and sub_id')
@@ -106,6 +117,15 @@ def parse():
   page = commands.add_parser('ui', help='Open the download page and keep it running')
   page.add_argument('course', nargs='?', type=course_id, help='Course to open first')
   page.add_argument('-o', '--output', type=Path, default=Path('.'), help='Workspace (default: current folder)')
+  page.add_argument(
+    '--eclass',
+    dest='capture_eclass',
+    default=True,
+    action=argparse.BooleanOptionalAction,
+    help='Check saved eclass cookies or import an existing Chrome session after sign-in (default: enabled)',
+  )
+
+  eclass.add_parser(commands)
 
   asr = commands.add_parser('transcribe', help='Transcribe recordings with BCut into .cache/transcript.tsv')
   asr.add_argument('paths', nargs='+', type=absolute, help='Lecture folders, course folders or .mp4 recordings')
@@ -151,10 +171,14 @@ def main():
   if args.command == 'ui':  # the page signs in itself
     import server
 
-    server.serve(Yanhekt(), args.output, args.course)
+    client = Yanhekt()
+    client._capture_eclass = args.capture_eclass
+    server.serve(client, args.output, args.course)
   elif args.command == 'login':
-    signed_in()
+    signed_in(capture_eclass=args.capture_eclass)
     print('Signed in.')
+  elif args.command == 'eclass':
+    sys.exit(eclass.dispatch(args))
   elif args.command == 'courses':
     courses = [course for course in signed_in().courses() if args.term in (None, course['term'])]
     for number, (term, group) in enumerate(groupby(courses, key=lambda course: course['term'])):
@@ -217,5 +241,12 @@ if __name__ == '__main__':
     main()
   except KeyboardInterrupt:
     raise SystemExit(130) from None
-  except (APIError, ValueError, OSError, requests.RequestException, subprocess.CalledProcessError) as error:
+  except (
+    APIError,
+    eclass.EclassError,
+    ValueError,
+    OSError,
+    requests.RequestException,
+    subprocess.CalledProcessError,
+  ) as error:
     raise SystemExit(describe(error)) from None

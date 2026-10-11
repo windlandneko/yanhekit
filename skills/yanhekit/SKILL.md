@@ -1,6 +1,6 @@
 ---
 name: yanhekit
-description: Download Yanhekt (延河课堂, aita.yanhekt.cn) lecture recordings, platform subtitles and PPT captures, build slide PDFs, transcribe with BCut, embed subtitles, and maintain course notes or answer questions from the material. Use for Yanhekt course links, BIT lecture replays, local lecture recordings, and requests for lecture transcripts, study notes, review outlines or course questions.
+description: Download Yanhekt (延河课堂, aita.yanhekt.cn) lecture recordings, subtitles and PPT captures, transcribe with BCut, and maintain course notes. Query zy-eclass.bit.edu.cn homework, exams, submission status and deadlines. Use for BIT lecture material, study notes, course questions, eclass assignments and DDL checks.
 allowed-tools: Bash(uv run ${CLAUDE_SKILL_DIR}/scripts/yanhekit.py *)
 ---
 
@@ -31,13 +31,15 @@ Use only the steps the request needs. Platform subtitles and slides are often en
 ## Download
 
 ```sh
-uv run <yanhekit> login
+uv run <yanhekit> login [--eclass|--no-eclass]
 uv run <yanhekit> courses [--term 2026-2027-1]
 uv run <yanhekit> lectures <course>
 uv run <yanhekit> download <course> (-l <lecture ID>... | --all) [--subtitles] [--slides] [--video [teacher] [screen]] [--pdf] [-o <workspace>]
 ```
 
 Start with `login`, which returns at once while the saved session is valid. Otherwise it opens a local sign-in page, prints its URL and waits, so run it in the background when the harness allows and give the user the URL if no browser window appears. The user completes the password, captcha and SMS steps there. Never ask for or handle the password yourself.
+
+`login` also checks the saved eclass session, including when the Yanhekt session is already valid (default `--eclass`; pass `--no-eclass` to skip). If eclass needs a session, it attempts to import Chrome cookies. The user must have signed into `https://zy-eclass.bit.edu.cn` in Chrome first; the local Yanhekt sign-in page authenticates through a separate backend session. An eclass failure prints a retry hint and keeps Yanhekt usable. Use `eclass import --browser` for another browser or `eclass import --file` for a Netscape cookie export. Imports validate the candidate session before replacing `~/.config/yanhekit/eclass-cookies.txt` atomically with mode 0o600; invalid imports preserve the previous session.
 
 `<course>` is a course ID from `courses` or a coursedetail URL. `-l` takes a lecture ID or `sub_id` and can repeat; `--all` selects every replay, so use it only when the user wants the whole course. `download` fetches only what you name:
 
@@ -51,6 +53,29 @@ Subtitles and slides take seconds, so fetch them first. Each lecture's last line
 A recording is 1–2 GB and can outlast a command timeout, so run video downloads in the background when the harness allows. Progress goes to stdout and retries to stderr, and an interrupted recording resumes from its finished pieces. Existing files are kept unless you pass `--overwrite`. `--connections` (default 16) sets parallel requests.
 
 `ui [<course>] [-o <workspace>]` opens a local page where the user picks lectures and follows the download queue. Offer it only when the user would rather click than say what to fetch; it runs until stopped.
+
+## Eclass
+
+`zy-eclass.bit.edu.cn` (BIT 学习平台) holds homework and exams. Query them using its own saved cookies and course IDs; eclass IDs and semester codes differ from Yanhekt's. Match courses by their name, teacher and term when combining sources.
+
+```sh
+uv run <yanhekit> eclass status
+uv run <yanhekit> eclass import [--browser chrome|chromium|edge|brave|firefox|opera|safari|all] [--file <cookies.txt>]
+uv run <yanhekit> eclass courses [--term 2026-1 | --all-terms]
+uv run <yanhekit> eclass activities <course_id> [--all] [--json]
+uv run <yanhekit> eclass activity <activity_id>
+uv run <yanhekit> eclass exams <course_id>
+uv run <yanhekit> eclass homework <course_id>
+uv run <yanhekit> eclass pending [--term 2026-1 | --all-terms] [--all] [--json]
+```
+
+`status` checks the saved cookie against `/api/profile`. `courses` and `pending` default to the latest semester available in eclass; `--term` selects an eclass code such as `2026-1`, and `--all-terms` includes historical semesters. The default is the latest available term, which may be historical for a user without current enrollment.
+
+`pending` reads both homework and exams independently for each selected course, fetches homework details for the user's submission count, and excludes submitted or closed items. `upcoming` marks items that have not started; already submitted work that permits resubmission appears only with `--all`. Dates display in the machine's local timezone, deadlines sort by absolute time, and undated items appear last. `--all` includes submitted and closed items within the selected semesters. `homework` and `exams` list all items for one course.
+
+Unknown submission states stay visible as `unknown`; group work with only a zero personal submission count and unrecognized exam submission records require confirmation in the platform. A failed course or detail query keeps successful results, prints the failures and returns exit code 1. Treat that result as incomplete, including when no rows were returned. `--json` returns an object with `complete`, `items` and `errors`; an empty list means no pending items only when `complete` is true. Do not infer a submission from a course-wide submission count.
+
+Store cookie exports privately. The `role_token` JWT carries account information and is sent only to the platform for authentication; do not include cookies or account data in shared reports or commits. `import --browser all` tries browsers in order and uses the first valid session, without merging accounts.
 
 ## Transcribe
 

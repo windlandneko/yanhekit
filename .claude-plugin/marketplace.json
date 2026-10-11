@@ -8,7 +8,7 @@
     {
       "name": "yanhekit",
       "source": "./",
-      "description": "Yanhekt toolkit: download recordings, subtitles and PPT captures, build slide PDFs, transcribe and embed subtitles, and maintain course notes."
+      "description": "Yanhekt toolkit: download recordings, subtitles and PPT captures, build slide PDFs, transcribe and embed subtitles, and maintain course notes. Query zy-eclass homework, exams, submission status and deadlines."
     }
   ]
 }

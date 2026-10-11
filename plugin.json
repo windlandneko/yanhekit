@@ -1,7 +1,7 @@
 {
   "name": "yanhekit",
   "version": "1.0.0",
-  "description": "Yanhekt toolkit: download recordings, subtitles and PPT captures, build slide PDFs, transcribe and embed subtitles, and maintain course notes.",
+  "description": "Yanhekt toolkit: download recordings, subtitles and PPT captures, build slide PDFs, transcribe and embed subtitles, and maintain course notes. Query zy-eclass homework, exams, submission status and deadlines.",
   "author": {
     "name": "windlandneko"
   },
@@ -9,15 +9,18 @@
     "yanhekt",
     "lecture",
     "transcript",
-    "notes"
+    "notes",
+    "eclass",
+    "homework",
+    "deadline"
   ],
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "extensions": {
     "com.openai": {
       "interface": {
         "displayName": "Yanhekit",
-        "shortDescription": "延河课堂工具包",
-        "longDescription": "下载延河课堂回放、字幕和 PPT 截图，整理课件 PDF，用 BCut 转录并软嵌入字幕，结合课程材料回答问题，维护课程与课次笔记内容。",
+        "shortDescription": "延河课堂资料与 eclass 作业查询",
+        "longDescription": "下载延河课堂回放、字幕和 PPT 截图，整理课件 PDF，用 BCut 转录并软嵌入字幕，结合课程材料回答问题，维护课程与课次笔记内容。查询 zy-eclass 作业、考试、提交状态和截止时间。",
         "developerName": "windlandneko",
         "category": "Productivity",
         "capabilities": [
@@ -31,7 +34,8 @@
         "defaultPrompt": [
           "XXX 这门课最近留了什么作业，有点名或者重要信息吗？",
           "我需要 XXX 这门课的课件，整理成PDF给我。",
-          "我要开始复习 XXX 这门课程。获取所有录播、字幕和PPT，生成复习笔记和指南。"
+          "我要开始复习 XXX 这门课程。获取所有录播、字幕和PPT，生成复习笔记和指南。",
+          "查询本学期 eclass 的未完成作业和考试，列出截止时间。"
         ]
       }
     }

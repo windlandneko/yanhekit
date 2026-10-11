@@ -1,7 +1,7 @@
 interface:
   display_name: "Yanhekit"
-  short_description: "延河课堂工具包"
-  default_prompt: "使用 $yanhekit 获取和分析课程材料，按我的需求整理课件和字幕、检索课程信息，维护课程与课次笔记内容。"
+  short_description: "延河课堂资料与 eclass 作业查询"
+  default_prompt: "使用 $yanhekit 获取和分析课程材料，整理课件和字幕、维护笔记，按需查询 eclass 作业、考试和截止时间。"
 
 policy:
   allow_implicit_invocation: true
