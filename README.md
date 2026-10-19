@@ -6,26 +6,29 @@
 
 ## 安装
 
-需要 [uv](https://docs.astral.sh/uv/)，ffmpeg 随 Python 依赖 [imageio-ffmpeg](https://github.com/imageio/imageio-ffmpeg) 自动安装。也可以不用 uv，在 Python 3.11+ 虚拟环境中安装脚本头部列出的包。
+在 Harness 中安装插件：
 
-直接把本仓库地址发给 Agent，Agent 会自动安装。如果要古法手动安装，使用以下命令：
+- Claude Code，在会话中输入：
 
-- Claude Code：
-
-```bash
+```
 /plugin marketplace add windlandneko/yanhekit
 /plugin install yanhekit@yanhekit
 ```
 
-- Codex：
+或在终端中运行 `claude plugin install yanhekit --marketplace windlandneko/yanhekit`。
+
+- Codex，在终端中运行：
 
 ```bash
 codex plugin marketplace add windlandneko/yanhekit
+codex plugin add yanhekit@yanhekit
 ```
 
-然后在插件目录或者 GUI 界面中找到并安装。
+也可以只运行第一条，再在插件目录中安装。
 
 - 其他 Harness：通过 SKILL 方式安装，即 `npx skills add windlandneko/yanhekit -g`，或把 `skills/yanhekit/` 复制到对应目录。
+
+第一次使用时，如果电脑上还没有 [uv](https://docs.astral.sh/uv/)，Agent 会运行插件自带的安装脚本把它装好，Python 和全部依赖（包括 ffmpeg）随后由 uv 自动下载。也可以不用 uv：在 Python 3.11+ 虚拟环境中安装 `skills/yanhekit/scripts/yanhekit.py` 头部列出的包，用这个环境的 Python 运行脚本。
 
 ## 使用
 
