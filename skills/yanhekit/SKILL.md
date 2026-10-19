@@ -6,7 +6,7 @@ allowed-tools: Bash(uv run ${CLAUDE_SKILL_DIR}/scripts/yanhekit.py *)
 
 # Yanhekit
 
-`<yanhekit>` in the commands below is the absolute path of `scripts/yanhekit.py` beside this `SKILL.md`; write it out in each command and run from the user's workspace so course material stays there. Ordinary Python 3.11+ can replace `uv run` once the script's declared dependencies are installed in a virtual environment. Video and audio processing need `ffmpeg` on PATH.
+`<yanhekit>` in the commands below is the absolute path of `scripts/yanhekit.py` beside this `SKILL.md`; write it out in each command and run from the user's workspace so course material stays there. Ordinary Python 3.11+ can replace `uv run` once the script's declared dependencies are installed in a virtual environment. ffmpeg comes with the dependencies.
 
 Use only the steps the request needs. Platform subtitles and slides are often enough for an overview or a targeted question; BCut gives a much better transcript of what was said.
 

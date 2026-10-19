@@ -6,7 +6,7 @@
 
 ## 安装
 
-需要 [uv](https://docs.astral.sh/uv/) 和 [ffmpeg](https://ffmpeg.org/)。也可以不用 uv，在 Python 3.11+ 虚拟环境中安装脚本头部列出的包。
+需要 [uv](https://docs.astral.sh/uv/)，ffmpeg 随 Python 依赖 [imageio-ffmpeg](https://github.com/imageio/imageio-ffmpeg) 自动安装。也可以不用 uv，在 Python 3.11+ 虚拟环境中安装脚本头部列出的包。
 
 直接把本仓库地址发给 Agent，Agent 会自动安装。如果要古法手动安装，使用以下命令：
 

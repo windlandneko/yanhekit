@@ -13,6 +13,7 @@ from urllib.parse import urlsplit
 
 import m3u8
 import requests
+from imageio_ffmpeg import get_ffmpeg_exe
 from requests.adapters import HTTPAdapter
 from tenacity import retry, retry_if_exception, stop_after_attempt, wait_exponential
 
@@ -203,7 +204,9 @@ def download_video(session, url, path, connections, report):
       for segment, (_, piece, _) in zip(playlist.segments, jobs):
         segment.uri = piece.name
       playlist.dump(folder / 'index.m3u8')
-      subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', folder / 'index.m3u8', '-c', 'copy', joined], check=True)
+      subprocess.run(
+        [get_ffmpeg_exe(), '-v', 'error', '-y', '-i', folder / 'index.m3u8', '-c', 'copy', joined], check=True
+      )
   shutil.rmtree(folder)
 
 
