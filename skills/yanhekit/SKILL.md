@@ -6,7 +6,7 @@ allowed-tools: Bash(uv run ${CLAUDE_SKILL_DIR}/scripts/yanhekit.py *)
 
 # Yanhekit
 
-`<yanhekit>` in the commands below is the absolute path of `scripts/yanhekit.py` beside this `SKILL.md`; write it out in each command and run from the user's workspace so course material stays there. Ordinary Python 3.11+ can replace `uv run` once the script's declared dependencies are installed in a virtual environment. Video and audio processing need `ffmpeg` on PATH.
+`<yanhekit>` in the commands below is the absolute path of `scripts/yanhekit.py` beside this `SKILL.md`; write it out in each command and run from the user's workspace so course material stays there. uv brings Python and every dependency, ffmpeg included. When `uv` is not found, run the setup script beside `yanhekit.py` once and let it finish, which can take a few minutes; it downloads uv itself and no course material: `powershell -NoProfile -ExecutionPolicy Bypass -File <scripts>/setup.ps1` on Windows from any shell, `sh <scripts>/setup.sh` on macOS and Linux, with `<scripts>` written out as an absolute path. It installs uv and prints its path; write that path in place of `uv` until the harness restarts. Run the scripts through uv rather than a Python or environment found elsewhere on the machine; only a Python 3.11+ virtual environment that the user set up with the script's declared dependencies can replace `uv run`.
 
 Use only the steps the request needs. Platform subtitles and slides are often enough for an overview or a targeted question; BCut gives a much better transcript of what was said.
 

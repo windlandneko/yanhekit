@@ -5,6 +5,7 @@ import subprocess
 import time
 
 import requests
+from imageio_ffmpeg import get_ffmpeg_exe
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 
@@ -84,7 +85,8 @@ def extract_audio(video, audio):
   audio.parent.mkdir(parents=True, exist_ok=True)
   with replacing(audio) as part:
     subprocess.run(
-      ['ffmpeg', '-v', 'error', '-y', '-i', video, '-vn', '-ac', '1', '-ar', '16000', '-b:a', '48k', part], check=True
+      [get_ffmpeg_exe(), '-v', 'error', '-y', '-i', video, '-vn', '-ac', '1', '-ar', '16000', '-b:a', '48k', part],
+      check=True,
     )
 
 

@@ -3,6 +3,7 @@
 # dependencies = [
 #   'beautifulsoup4>=4.12',
 #   'flask>=3.1',
+#   'imageio-ffmpeg>=0.6',
 #   'img2pdf>=0.6',
 #   'keyring>=25',
 #   'm3u8>=6',

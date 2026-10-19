@@ -7,6 +7,8 @@ import subprocess
 from bisect import bisect_right
 from contextlib import contextmanager
 
+from imageio_ffmpeg import get_ffmpeg_exe
+
 
 @contextmanager
 def replacing(path):
@@ -125,7 +127,8 @@ def embed(video, subtitles):
   """Replace `video` with a copy carrying the .srt or .vtt file as its soft subtitle track, without re-encoding."""
   with replacing(video) as output:
     subprocess.run(
-      ['ffmpeg', '-v', 'error', '-y', '-i', video, '-i', subtitles, '-map', '0:v', '-map', '0:a?', '-map', '1:0',
-       '-c', 'copy', '-c:s', 'mov_text', '-metadata:s:s:0', 'language=zho', '-movflags', '+faststart', output],
+      [get_ffmpeg_exe(), '-v', 'error', '-y', '-i', video, '-i', subtitles, '-map', '0:v', '-map', '0:a?',
+       '-map', '1:0', '-c', 'copy', '-c:s', 'mov_text', '-metadata:s:s:0', 'language=zho', '-movflags', '+faststart',
+       output],
       check=True,
     )  # fmt: skip
