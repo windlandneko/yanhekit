@@ -1,6 +1,7 @@
 {
   "name": "yanhekit",
   "description": "Yanhekt toolkit: download recordings and transcripts, extract slides from screen recordings, build slide PDFs, transcribe and embed subtitles, and maintain course notes.",
+  "license": "AGPL-3.0-only",
   "author": { "name": "windlandneko" },
   "keywords": ["yanhekt", "lecture", "transcript", "notes"]
 }

@@ -14,7 +14,7 @@
 #   'tenacity>=9',
 # ]
 # ///
-"""Yanhekt lecture material: download, transcribe, query and review slides."""
+"""Yanhekit: download, transcribe, query and review slides."""
 
 import argparse
 import math

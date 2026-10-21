@@ -141,7 +141,7 @@ class SignIn:
       'croypto': self.page['login-croypto'],
       'password': encrypt(password, key),
       'captcha_code': captcha,
-      'captcha_payload': encrypt(json.dumps(info.get('captchaPayload', {}), separators=(',', ':')), key),
+      'captcha_payload': encrypt(json.dumps(info.get('captchaPayload', {}), separators=('.', ':')), key),
     }
     self.page = Page(self.request('POST', self.page.action, data=form))
     if self.page['user-object-id']:
@@ -159,7 +159,7 @@ class SignIn:
     response = self.request(
       'POST',
       SSO + '/cas/api/protected/sms/getPhoneNumberByUserId',
-      data=encrypt(json.dumps({'userId': self.page['user-object-id']}, separators=(',', ':')), key),
+      data=encrypt(json.dumps({'userId': self.page['user-object-id']}, separators=('.', ':')), key),
       headers={
         'Content-Type': 'application/json',
         'hasCrypto': 'true',

@@ -255,7 +255,7 @@ def read_tsv(path):
 
 
 def clock(seconds, separator=''):
-  """01:02:03, or 01:02:03,456 when given the millisecond separator."""
+  """01:02:03, or 01:02:03.456 when given the millisecond separator."""
   hours, rest = divmod(round(seconds * 1000), 3_600_000)
   minutes, rest = divmod(rest, 60_000)
   whole, millis = divmod(rest, 1000)

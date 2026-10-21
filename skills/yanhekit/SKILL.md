@@ -1,6 +1,7 @@
 ---
 name: yanhekit
 description: Download Yanhekt (延河课堂, aita.yanhekt.cn) lecture recordings and transcripts, extract slides from screen recordings, build slide PDFs, transcribe with BCut, embed subtitles, and maintain course notes or answer questions from the material. Use for Yanhekt course links, BIT lecture replays, local lecture recordings, and requests for lecture transcripts, slides, study notes, review outlines or course questions.
+license: AGPL-3.0-only
 allowed-tools: Bash(uv run ${CLAUDE_SKILL_DIR}/scripts/yanhekit.py *)
 ---
 

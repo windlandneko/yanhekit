@@ -46,7 +46,7 @@ npx skills add windlandneko/yanhekit -g -s '*'
 
 > 这种东西小范围享受就可以了.jpg
 
-- **用途**：本工具包仅供个人学习和研究使用，不得用于商业或非法用途。
+- **用途**：只处理你本人有权访问的课程，不得用于非法用途。
 - **课程内容**：录播涉及老师和同学的隐私与版权，下载和使用时请遵守法律法规和学校规定，不要传播给未经授权的第三方，也不要在其他平台公开分享。
 - **转录**：BCut 转录会把提取的音频上传到 Bilibili 的服务，请确保你有权使用这些音频，结果仅供参考：转录可能存在不少错误，漏掉的作业和知识点别怪我喵。
 
@@ -55,3 +55,7 @@ npx skills add windlandneko/yanhekit -g -s '*'
 - [bit-admin/AutoSlides](https://github.com/bit-admin/Yanhekt-AutoSlides)
 - [Fangwenky/yanhekt-downloader](https://github.com/Fangwenky/yanhekt-downloader)
 - [BIT101-dev/BIT-Login](https://github.com/BIT101-dev/BIT-Login)
+
+## 许可
+
+本项目以 [AGPL-3.0](LICENSE) 开源。分发修改版，或以网络服务的形式提供给他人使用时，须以同一许可证公开完整源码。
