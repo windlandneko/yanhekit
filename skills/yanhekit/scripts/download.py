@@ -26,9 +26,7 @@ from workspace import (
   slide_index,
   stamp,
   sync_index,
-  timeline,
   write_json,
-  write_tsv,
 )
 
 BLOCK = 8 << 20
@@ -178,7 +176,7 @@ def download_video(session, url, path, title, say):
   say(f'saved {path.name}, {path.stat().st_size / 1e9:.1f} GB')
 
 
-def download(client, course, folder, names=None, *, latest=None, videos=(), fast=False, slides=False,
+def download(client, course, folder, names=None, *, latest=None, videos=(), slides=False,
              transcribe=False, overwrite=False):  # fmt: skip
   """Fetch the selected resources of each lecture, printing its progress and recording its length in course.json;
   print what each lecture holds at the end and return how many lectures failed.
@@ -188,8 +186,8 @@ def download(client, course, folder, names=None, *, latest=None, videos=(), fast
   from the screen recording, which is removed afterwards unless `videos` keeps it; at most WAITING such recordings are
   on disk at once.
   """
-  if not (videos or fast or slides or transcribe):
-    raise ValueError('Nothing to download; choose --fast-transcript, --classroom, --screen, --slides or --transcribe')
+  if not (videos or slides or transcribe):
+    raise ValueError('Nothing to download; choose --classroom, --screen, --slides or --transcribe')
   index = sync_index(course, folder)
   chosen = select(index, names, latest)
   if not chosen:
@@ -232,10 +230,6 @@ def download(client, course, folder, names=None, *, latest=None, videos=(), fast
         if videos or extracting or 'duration_s' not in lecture:
           info = client.lecture(course['id'], lecture['sub_id'])
           lecture['duration_s'] = info['duration_s']
-        if fast:
-          path = timeline(base, 'fast-transcript')
-          if overwrite or not path.exists():
-            write_tsv(path, client.subtitles(lecture['sub_id']))
         for view in [*videos, 'screen'] if temporary else videos:
           path = recording(base, view)
           if overwrite or not path.exists():

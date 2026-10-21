@@ -88,7 +88,7 @@ class Yanhekt:
         for row in result['data']
       ]
       if not result['data'] or len(courses) >= result['total']:
-        return courses
+        return sorted(courses, key=lambda course: course['term'], reverse=True)  # 2026-2027-1; stable within a term
       page += 1
 
   def search(self, keyword='', term=None, college=None, sort=None, page=1, per_page=50):
@@ -145,7 +145,8 @@ class Yanhekt:
     streams = {name: ready[kind] for name, kind in STREAMS.items() if kind in ready}
     return {'duration_s': float(data['duration']), 'streams': streams}
 
-  def subtitles(self, sub_id):
+  def fast_transcript(self, sub_id):
+    """The platform's own (start, end, text) segments of a replay."""
     body = self.get('/courseapi/v3/web-socket/search-trans-result', sub_id=sub_id, format='json')
     segments = (segment for group in body['list'] for segment in group['all_content'])
     latest = {float(s['BeginSec']): (float(s['BeginSec']), float(s['EndSec']), s['Text']) for s in segments}

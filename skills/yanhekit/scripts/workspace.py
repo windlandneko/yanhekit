@@ -50,9 +50,9 @@ def file_name(text):
 
 
 def lecture_id(title):
-  """2026-10-8第6-7节 -> 10月08日第6-7节; another title is kept as a file name."""
+  """2026-10-8第6-7节 -> 10月08日第6-7节; another title is kept as a file name, and an empty one becomes 课次."""
   match = re.fullmatch(r'\d{4}-(\d+)-(\d+)(第.+节)', title)
-  return f'{int(match[1]):02}月{int(match[2]):02}日{match[3]}' if match else file_name(title)
+  return file_name(f'{int(match[1]):02}月{int(match[2]):02}日{match[3]}' if match else title) or '课次'
 
 
 def course_folder(workspace, course):
@@ -64,11 +64,20 @@ def course_folder(workspace, course):
 
 
 def merge_lectures(course, index):
-  """The current replay list as course.json lectures, keeping what earlier downloads recorded."""
+  """The current replay list as course.json lectures, keeping the IDs recorded before; a new lecture is numbered when
+  another has its ID: 补课, 补课 2."""
   known = {lecture['sub_id']: lecture for lecture in index.get('lectures', [])}
-  return [
-    known.get(row['sub_id'], {'id': lecture_id(row['title']), 'sub_id': row['sub_id']}) for row in course['replays']
-  ]
+  taken = {lecture['id'] for lecture in known.values()}
+  for row in course['replays']:
+    if row['sub_id'] not in known:
+      name = given = lecture_id(row['title'])
+      number = 1
+      while name in taken:
+        number += 1
+        name = f'{given} {number}'
+      taken.add(name)
+      known[row['sub_id']] = {'id': name, 'sub_id': row['sub_id']}
+  return [known[row['sub_id']] for row in course['replays']]
 
 
 def sync_index(course, folder):
@@ -91,26 +100,21 @@ def holdings(lecture, folder):
   if lecture.get('dropped'):
     return 'dropped'
   held = [clock(lecture['duration_s'])] if 'duration_s' in lecture else []
-  if (fast := timeline(folder, 'fast-transcript')).exists():
-    held.append(f'fast transcript ({count(len(read_tsv(fast)), "segment")})')
   if slides := read_slides(folder):
     held.append(count(len(slides), 'slide'))
   held += [f'{view} video' for view in recordings(folder)]
-  held += [
-    name
-    for name, path in (('transcript', timeline(folder, 'transcript')), ('notes', folder / '笔记.md'))
-    if path.exists()
-  ]
+  held += [name for name, path in (('transcript', timeline(folder)), ('notes', folder / '笔记.md')) if path.exists()]
   return ', '.join(held) or 'nothing saved'
 
 
 def drop(lecture):
-  """Delete an empty lecture's folder and mark it in course.json, so that its course folder passes over it."""
+  """Delete an empty lecture's folder, if any, and mark it in course.json, so that its course folder passes over it."""
   index = read_index(lecture.parent)
   entry = next((entry for entry in index.get('lectures', []) if entry['id'] == lecture.name), None)
   if entry is None:
     raise ValueError(f'{lecture.name} is not a lecture in {lecture.parent.name}/course.json')
-  shutil.rmtree(lecture, ignore_errors=True)
+  if lecture.exists():
+    shutil.rmtree(lecture)
   entry['dropped'] = True
   write_json(lecture.parent / 'course.json', index)
 
@@ -220,9 +224,9 @@ def recordings(lecture):
   return {view: path for view in VIEWS if (path := recording(lecture, view)).exists()}
 
 
-def timeline(lecture, source):
-  """The timed text of the BCut transcript, or of the platform's rougher fast transcript."""
-  return lecture / '.cache' / f'{source}.tsv'
+def timeline(lecture):
+  """The timed text of the BCut transcript."""
+  return lecture / '.cache' / 'transcript.tsv'
 
 
 def slide_index(lecture):

@@ -15,11 +15,11 @@
 }
 ```
 
-`lectures` lists every replay in class order. `id` is the folder name, built from the platform title (`2026-9-23第3-5节`), and `sub_id` the platform's replay ID. `duration_s` appears once the lecture is downloaded, and `dropped` marks an empty lecture whose folder `drop` deleted.
+`lectures` lists every replay in class order. `id` is the folder name, built from the platform title (`2026-9-23第3-5节`) and numbered when another lecture has it (`补课 2`), and `sub_id` the platform's replay ID; a lecture keeps its `id` when the platform renames it. `duration_s` appears once the lecture is downloaded, and `dropped` marks an empty lecture whose folder `drop` deleted.
 
-## Timelines
+## Transcript
 
-`.cache/fast-transcript.tsv` holds the platform's fast transcript and `.cache/transcript.tsv` the BCut transcript, tab-separated with a `start_s`, `end_s`, `text` header and rows ordered by start. `字幕.txt` is written from `transcript.tsv`, one `[00:02:30] text` line per segment.
+`.cache/transcript.tsv` holds the BCut transcript, tab-separated with a `start_s`, `end_s`, `text` header and rows ordered by start. `字幕.txt` is written from `transcript.tsv`, one `[00:02:30] text` line per segment.
 
 ## Slides
 

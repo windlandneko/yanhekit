@@ -25,10 +25,10 @@ Pick the workflow that fits the request. Notes are the product: transcripts only
     课件.pdf            slides
     slides/            index.json and numbered slides: 001.jpg, 002.jpg, …
     frames/            frames taken at given times: 教室-00-41-20.jpg, …
-    .cache/            fast-transcript.tsv, transcript.tsv, audio.m4a, sheet-001-016.jpg
+    .cache/            transcript.tsv, audio.m4a, sheet-001-016.jpg
 ```
 
-Commands take targets: a course folder stands for its lectures not dropped, and `--latest N` narrows it to the last N; a lecture folder stands for itself, and `download` also takes one not yet created, named `<course folder>/<lecture ID>` as `status` lists it. [references/files.md](references/files.md) gives the file formats and [references/notes.md](references/notes.md) the note templates.
+Commands take targets: a course folder stands for its lectures not dropped, and `--latest N` narrows it to the last N; a lecture folder stands for itself, and `download` and `query --fast-transcript` also take one not yet created, named `<course folder>/<lecture ID>` as `status` lists it. [references/files.md](references/files.md) gives the file formats and [references/notes.md](references/notes.md) the note templates.
 
 ## Workflows
 
@@ -42,8 +42,8 @@ Commands take targets: a course folder stands for its lectures not dropped, and 
 
 The default for a course or some of its lectures, with `C` the course folder. A rerun picks up new lectures and skips finished work.
 
-1. `download C --fast-transcript`, which takes seconds.
-2. Drop empty lectures, such as holidays, cancelled classes or empty rooms: their fast transcripts have few or no segments, and `query <lecture> --fast-transcript` settles doubtful ones. List each in `课程总结.md` with its reason.
+1. Survey the course with `query C --fast-transcript -m '点名|签到|作业|考试'`, which takes seconds.
+2. Drop empty lectures, such as holidays, cancelled classes or empty rooms: their fast transcripts have few or no segments, and reading a doubtful one with `query <lecture> --fast-transcript` settles it. List each in `课程总结.md` with its reason.
 3. `download C --classroom --slides --transcribe` in the background.
 4. Fix recurring BCut errors with one `replace C -r <wrong> <right>...`. BCut turns course terms into homophones and garbles campus names: `延河课堂` is the lecture platform, `乐学` the learning platform and `i北理` the campus app built on 钉钉. Take the terms from the slides, grep the transcripts for their misheard forms, and fix the forms that recur and that the slides or context confirm; leave one-off errors and unclear phrases.
 5. `embed C`.
@@ -52,7 +52,7 @@ The default for a course or some of its lectures, with `C` the course folder. A 
 
 ### Check recent lectures
 
-For questions such as "上节课点名了吗" or "最近留了什么作业". For each lecture, read `笔记.md` when it exists, or else `字幕.txt`; for lectures with neither, run `download <course folders> --latest 1 --fast-transcript` and read it with `query <course folders> --latest 1 --fast-transcript`. Answer with timestamps, and offer to process the course when the fast transcript is too garbled to be sure.
+For questions such as "上节课点名了吗" or "最近留了什么作业". For each lecture, read `笔记.md` when it exists, or else `字幕.txt`; for lectures with neither, run `query <course folders> --latest 1 --fast-transcript`, with `-m` for a specific question. Answer with timestamps, and offer to process the course when the fast transcript is too garbled to be sure.
 
 ### Slide deck
 
@@ -80,13 +80,13 @@ uv run <yanhekit> courses [--term 2026-2027-1]
 uv run <yanhekit> search [<keyword>] [--term 2024-2025-2] [--college 计算机学院] [--sort newest|oldest|popular] [--page 1] [--limit 50]
 uv run <yanhekit> add <course>... [-o <workspace>]
 uv run <yanhekit> status [<course folder>...]
-uv run <yanhekit> download <target>... [--latest N] [--fast-transcript] [--classroom] [--screen] [--slides] [--transcribe] [--overwrite]
+uv run <yanhekit> download <target>... [--latest N] [--classroom] [--screen] [--slides] [--transcribe] [--overwrite]
 uv run <yanhekit> drop <lecture>...
 ```
 
 `<course>` is a course ID or a coursedetail URL. `courses` and `search` print a course per line: ID, title, teacher, term and, for `search`, college. `search` matches titles and teacher names and returns one page of up to `--limit 100`, so narrow the keyword, term or college rather than paging. `add` and `status` list each lecture with what its folder holds; `status` stays offline and covers every course folder here by default.
 
-`download` refreshes the lecture list first. `--fast-transcript` fetches the platform's own transcript in seconds; it is rougher than BCut's, so it serves surveys and quick checks. `--classroom` and `--screen` save those recordings. `--slides` extracts the slides from the screen recording, fetching it for the purpose and removing it afterwards unless `--screen` keeps it; downloads pause while two such recordings wait for extraction. `--transcribe` transcribes as `transcribe` does and needs a kept recording, usually `--classroom`. Slides and transcripts are made in two queues while the next lectures download. Existing files are kept unless you pass `--overwrite`, and an interrupted recording resumes.
+`download` refreshes the lecture list first. `--classroom` and `--screen` save those recordings. `--slides` extracts the slides from the screen recording, fetching it for the purpose and removing it afterwards unless `--screen` keeps it; downloads pause while two such recordings wait for extraction. `--transcribe` transcribes as `transcribe` does and needs a kept recording, usually `--classroom`. Slides and transcripts are made in two queues while the next lectures download. Existing files are kept unless you pass `--overwrite`, and an interrupted recording resumes.
 
 A recording is 2–3 GB, so run downloads of recordings and slides in the background. Each output line starts with the time and the lecture, a long step reports its progress at least every 10 seconds, and the run ends with a line per lecture on what it holds.
 
@@ -105,7 +105,7 @@ uv run <yanhekit> query <target>... [--latest N] [--fast-transcript] [-m 流水�
 
 `replace` applies the pairs in order to every transcript, prints the hits, and rewrites `字幕.txt`; check a wrong form that is also a real word with `query -m` first. `embed` replaces each recording with a copy whose only subtitle track is the transcript, or the .srt or .vtt `--file` given, without re-encoding, and skips recordings that already carry the current transcript.
 
-`query` prints the segments of the BCut transcript, or of the fast transcript with `--fast-transcript`, as `[00:02:30] text` lines. `-m`/`--match` keeps those matching a regular expression in any case, so one call covers alternatives such as `点名|签到|考勤`. Each lecture with matches starts with a line naming it, and each run of segments follows the slide then on screen, such as `slides/008.jpg`; with no match, it says how many lectures it searched.
+`query` prints the segments of the BCut transcript as `[00:02:30] text` lines. `--fast-transcript` fetches the platform's own transcript instead, online and in seconds for any lecture; it is rougher than BCut's, so it serves surveys and quick checks. `-m`/`--match` keeps the segments matching a regular expression in any case, so one call covers alternatives such as `点名|签到|考勤`; matching skips punctuation and fillers such as 嗯 and 啊, and a match may run on into the next two segments. Each lecture starts with a line giving its segment count, or why it has none, and each run of segments follows the slide then on screen, such as `slides/008.jpg`.
 
 ### Slides and frames
 

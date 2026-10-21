@@ -101,7 +101,7 @@ def extract_audio(video, audio, encode=False):
 
 def transcribe_lecture(lecture, overwrite, say):
   """Transcribe the lecture's first recording into 字幕.txt, reporting through `say`; return whether it failed."""
-  if timeline(lecture, 'transcript').exists() and not overwrite:
+  if timeline(lecture).exists() and not overwrite:
     say('kept existing transcript')
     return False
   video = next(iter(recordings(lecture).values()), None)
@@ -122,7 +122,7 @@ def transcribe_lecture(lecture, overwrite, say):
         ticker.set('encoding the sound track to AAC')
         extract_audio(video, audio, encode=True)
         rows = bcut.transcribe(audio)
-    segments = write_tsv(timeline(lecture, 'transcript'), rows)
+    segments = write_tsv(timeline(lecture), rows)
     write_text(lecture)
     say(f'{count(segments, "segment")} in 字幕.txt')
     return False

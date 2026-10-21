@@ -20,6 +20,7 @@ import argparse
 import math
 import re
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import download
@@ -38,7 +39,9 @@ from workspace import (
   log,
   parse_time,
   read_index,
+  read_tsv,
   recordings,
+  select,
   slide_index,
   sync_index,
   timeline,
@@ -115,6 +118,32 @@ def having(args, check, missing):
   return found
 
 
+def transcripts(args):
+  """(lecture, BCut segments or why there are none) for each target lecture."""
+  for lecture in lectures(args.paths, args.latest):
+    yield (
+      lecture,
+      read_tsv(timeline(lecture)) if timeline(lecture).exists() else 'no transcript; run `transcribe` first',
+    )
+
+
+def fast_transcripts(args):
+  """(lecture, platform segments or why there are none) for each target lecture, fetched online in parallel."""
+  client = signed_in()
+
+  def fetch(lecture):
+    try:
+      return client.fast_transcript(lecture['sub_id'])
+    except FAILURES as error:
+      return f'fast transcript failed: {describe(error)}'
+
+  for folder, names in by_course(args.paths).items():
+    index = sync_index(client.course(read_index(folder)['course_id']), folder)
+    chosen = select(index, names, args.latest)
+    with ThreadPoolExecutor(8) as pool:
+      yield from zip((folder / lecture['id'] for lecture in chosen), pool.map(fetch, chosen))
+
+
 def parse():
   parser = argparse.ArgumentParser(description=__doc__)
   commands = parser.add_subparsers(dest='command', required=True)
@@ -138,9 +167,6 @@ def parse():
   state = commands.add_parser('status', help='List what each lecture holds, without going online')
   state.add_argument('paths', nargs='*', type=absolute, metavar='course', help='Default: every course folder here')
   fetch = commands.add_parser('download', parents=[targets], help='Download lecture resources')
-  fetch.add_argument(
-    '--fast-transcript', action='store_true', help="The platform's own transcript, rougher than BCut's"
-  )
   fetch.add_argument('--classroom', action='store_true', help='Classroom recording')
   fetch.add_argument('--screen', action='store_true', help='Screen recording')
   fetch.add_argument('--slides', action='store_true', help='Slides extracted from the screen recording')
@@ -159,7 +185,7 @@ def parse():
   attach.add_argument('--file', type=absolute, help='An .srt or .vtt file instead')
   find = commands.add_parser('query', parents=[targets], help='Print segments, each after the slide on screen')
   find.add_argument(
-    '--fast-transcript', action='store_true', help="The platform's transcript from `download --fast-transcript`"
+    '--fast-transcript', action='store_true', help="The platform's own transcript, fetched online; rougher than BCut's"
   )
   find.add_argument('-m', '--match', type=pattern, help='Regular expression, such as 点名|签到; any case')
   find.add_argument('--start', type=parse_time, default=0, help='Seconds or [h:]mm:ss')
@@ -227,7 +253,6 @@ def main():
         names,
         latest=args.latest,
         videos=views,
-        fast=args.fast_transcript,
         slides=args.slides,
         transcribe=args.transcribe,
         overwrite=args.overwrite,
@@ -245,9 +270,7 @@ def main():
     if failed:
       raise SystemExit(f'{count(failed, "recording")} failed')
   elif args.command == 'replace':
-    found = having(
-      args, lambda lecture: timeline(lecture, 'transcript').exists(), 'No transcripts; run `transcribe` first'
-    )
+    found = having(args, lambda lecture: timeline(lecture).exists(), 'No transcripts; run `transcribe` first')
     for lecture in found:
       hits = transcript.replace(lecture, args.pairs)
       done = [f'{wrong} -> {right} {hit}x' for (wrong, right), hit in zip(args.pairs, hits) if hit]
@@ -255,7 +278,7 @@ def main():
   elif args.command == 'embed':
     found = having(
       args,
-      lambda lecture: recordings(lecture) and (args.file or timeline(lecture, 'transcript').exists()),
+      lambda lecture: recordings(lecture) and (args.file or timeline(lecture).exists()),
       'No recordings with a transcript; run `download --classroom` and `transcribe` first',
     )
     for lecture in found:
@@ -265,27 +288,18 @@ def main():
         continue
       subtitles = args.file.read_text(encoding='utf-8') if args.file else transcript.srt(lecture)
       for video in videos:
-        transcript.embed(video, subtitles, None if args.file else timeline(lecture, 'transcript'))
+        transcript.embed(video, subtitles, None if args.file else timeline(lecture))
         log(lecture, f'embedded subtitles in {video.name}')
   elif args.command == 'query':
-    source = 'fast-transcript' if args.fast_transcript else 'transcript'
-    missing = (
-      'No fast transcripts; run `download --fast-transcript` first'
-      if args.fast_transcript
-      else 'No transcripts; run `transcribe` first'
-    )
-    found = having(args, lambda lecture: timeline(lecture, source).exists(), missing)
-    matches = [
-      (lecture, lines)
-      for lecture in found
-      if (lines := list(transcript.query(lecture, source, args.match, args.start, args.end)))
-    ]
-    if not matches:
-      print(f'No matching segments in {count(len(found), "lecture")}')
-    for number, (lecture, lines) in enumerate(matches):
-      if number:
+    found = fast_transcripts(args) if args.fast_transcript else transcripts(args)
+    gap = False
+    for lecture, rows in found:
+      lines = [] if isinstance(rows, str) else list(transcript.query(lecture, rows, args.match, args.start, args.end))
+      if gap:
         print()
-      print(label(lecture), *lines, sep='\n')  # a heading, then its lines, as ripgrep groups them
+      summary = rows if isinstance(rows, str) else count(len(rows), 'segment')
+      print(f'{label(lecture)}: {summary}', *lines, sep='\n')  # a heading, then its lines, as ripgrep groups them
+      gap = bool(lines)
 
   elif args.command == 'frame':
     import slides  # numpy and Pillow take a quarter of a second to load
