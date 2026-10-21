@@ -139,7 +139,7 @@ To install Yanhekit from its repository, fetch https://github.com/windlandneko/y
 
 Then tell the user to start a new session so that the harness loads the skills.
 
-`uv` fetches Python and the script's dependencies on its first run. When the shell does not find `uv`, tell the user and, once they agree, install it with the first of these that works:
+`uv` fetches Python and the script's dependencies on its first run. They include an ffmpeg build; to use another one, set `IMAGEIO_FFMPEG_EXE` to its path. When the shell does not find `uv`, tell the user and, once they agree, install it with the first of these that works:
 
 1. The official installer: `curl -LsSf https://astral.sh/uv/install.sh | sh` on macOS and Linux, or `powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"` on Windows. It places `uv` in `~/.local/bin`, or `%USERPROFILE%\.local\bin` on Windows; call it by that path while the current shell does not find it.
 2. When the installer cannot reach GitHub and Python 3 with pip is present: `python3 -m pip install --user uv -i https://pypi.tuna.tsinghua.edu.cn/simple`, with `py` for `python3` on Windows; then write `python3 -m uv` for `uv`.
