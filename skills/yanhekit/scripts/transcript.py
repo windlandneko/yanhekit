@@ -1,12 +1,11 @@
 """Timed transcripts: 字幕.txt, query, batch fixes and embedding."""
 
 import math
-import os
 import re
 from bisect import bisect_right
 from itertools import accumulate
 
-from workspace import clock, ffmpeg, read_slides, read_tsv, replacing, timeline, write_tsv
+from workspace import clock, ffmpeg, mark, read_slides, read_tsv, replacing, timeline, write_tsv
 
 NOISE = re.compile(r'[^\w\s]|[嗯啊呃哦哎诶唉]')  # punctuation and fillers, which matching skips
 
@@ -69,16 +68,10 @@ def query(lecture, rows, pattern=None, start=0, end=math.inf):
     yield f'[{clock(begin)}] {text}'
 
 
-def embedded(video, lecture):
-  """Whether the recording carries the current transcript, which `embed` marks with the transcript's modification time."""
-  return video.stat().st_mtime_ns == timeline(lecture).stat().st_mtime_ns
-
-
-def embed(video, subtitles, source=None):
+def embed(video, subtitles, source):
   """Replace `video` with a copy whose only subtitle track is `subtitles`, the text of an .srt or .vtt file, without
-  re-encoding; the copy takes the modification time of the `source` file the subtitles come from."""
+  re-encoding; the copy is marked with the `source` file the subtitles come from."""
   with replacing(video) as output:
     ffmpeg('-i', video, '-i', 'pipe:', '-map', '0:v', '-map', '0:a?', '-map', '1:0', '-c', 'copy', '-c:s', 'mov_text',
-           '-metadata:s:s:0', 'language=zho', '-movflags', '+faststart', output, input=subtitles.encode())  # fmt: skip
-  if source:
-    os.utime(video, ns=(video.stat().st_atime_ns, source.stat().st_mtime_ns))
+           '-metadata:s:s:0', 'language=zho', '-metadata', f'comment={mark(source)}',
+           '-movflags', '+faststart', output, input=subtitles.encode())  # fmt: skip

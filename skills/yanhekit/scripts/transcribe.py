@@ -124,6 +124,7 @@ def transcribe_lecture(lecture, overwrite, say):
         rows = bcut.transcribe(audio)
     segments = write_tsv(timeline(lecture), rows)
     write_text(lecture)
+    audio.unlink()
     say(f'{count(segments, "segment")} in 字幕.txt')
     return False
   except FAILURES as error:

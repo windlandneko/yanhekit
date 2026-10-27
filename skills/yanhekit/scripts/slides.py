@@ -119,10 +119,8 @@ def canvas(gray, ratios=(16 / 9, 4 / 3), sizes=(0.4, 0.85), cover=0.97, slack=3)
   down = np.abs(np.diff(gray, axis=1)) > 10
   rows = lines(across.sum(axis=1), cover * sizes[0] * h * min(ratios))
   cols = lines(down.sum(axis=0), cover * sizes[0] * h)
-  across, down = (
-    across.cumsum(axis=1, dtype=np.int32),
-    down.cumsum(axis=0, dtype=np.int32),
-  )  # edge counts along any side by subtraction
+  across = across.cumsum(axis=1, dtype=np.int32)  # edge counts along any side by subtraction
+  down = down.cumsum(axis=0, dtype=np.int32)
   best, box = 0, None
   for top in rows:
     bottoms = rows[(rows >= top + h * sizes[0]) & (rows <= top + h * sizes[1])][:, None]  # against every left column
@@ -206,7 +204,7 @@ def sheets(lecture, entries, columns=4, rows=4):
   font = ImageFont.load_default(20)
   paths = []
   (lecture / '.cache').mkdir(exist_ok=True)
-  for old in (lecture / '.cache').glob('sheet-*.jpg'):  # sheets of other ranges and layouts
+  for old in (lecture / '.cache').glob('sheet-*.jpg'):
     old.unlink()
   for start in range(0, len(entries), columns * rows):
     group = entries[start : start + columns * rows]
@@ -260,4 +258,6 @@ def write_pdf(lecture, entries):
 
   output = lecture / '课件.pdf'
   output.write_bytes(img2pdf.convert([str(lecture / 'slides' / entry['file']) for entry in entries]))
+  for sheet in (lecture / '.cache').glob('sheet-*.jpg'):
+    sheet.unlink()
   return output

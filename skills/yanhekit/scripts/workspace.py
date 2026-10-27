@@ -1,6 +1,7 @@
 """The course workspace: folders, course.json, timelines and the helpers the other modules share."""
 
 import csv
+import hashlib
 import json
 import math
 import re
@@ -97,17 +98,24 @@ def sync_index(course, folder):
 
 def holdings(lecture, folder):
   """What a lecture has: its length from course.json, then the files in its folder."""
-  if lecture.get('dropped'):
-    return 'dropped'
+  if reason := lecture.get('dropped'):
+    return 'dropped' if reason is True else f'dropped: {reason}'
   held = [clock(lecture['duration_s'])] if 'duration_s' in lecture else []
   if slides := read_slides(folder):
     held.append(count(len(slides), 'slide'))
-  held += [f'{view} video' for view in recordings(folder)]
-  held += [name for name, path in (('transcript', timeline(folder)), ('notes', folder / '笔记.md')) if path.exists()]
+  if (deck := folder / '课件.pdf').exists():
+    import pikepdf
+
+    with pikepdf.open(deck) as pdf:
+      held.append(f'课件.pdf of {count(len(pdf.pages), "page")}')
+  source = timeline(folder)
+  for view, video in recordings(folder).items():
+    held.append(f'{view} video' + ' with subtitles' * (source.exists() and carries(video, source)))
+  held += [name for name, path in (('transcript', source), ('notes', folder / '笔记.md')) if path.exists()]
   return ', '.join(held) or 'nothing saved'
 
 
-def drop(lecture):
+def drop(lecture, reason=None):
   """Delete an empty lecture's folder, if any, and mark it in course.json, so that its course folder passes over it."""
   index = read_index(lecture.parent)
   entry = next((entry for entry in index.get('lectures', []) if entry['id'] == lecture.name), None)
@@ -115,7 +123,7 @@ def drop(lecture):
     raise ValueError(f'{lecture.name} is not a lecture in {lecture.parent.name}/course.json')
   if lecture.exists():
     shutil.rmtree(lecture)
-  entry['dropped'] = True
+  entry['dropped'] = reason or True
   write_json(lecture.parent / 'course.json', index)
 
 
@@ -227,6 +235,17 @@ def recordings(lecture):
 def timeline(lecture):
   """The timed text of the BCut transcript."""
   return lecture / '.cache' / 'transcript.tsv'
+
+
+def mark(source):
+  """The comment with which `embed` tags a recording: a hash of the file its subtitles come from."""
+  return 'yanhekit ' + hashlib.sha1(source.read_bytes()).hexdigest()[:12]
+
+
+def carries(video, source):
+  """Whether `embed` put the subtitles from `source`, as it now reads, into the recording."""
+  metadata = ffmpeg('-i', video, '-f', 'ffmetadata', '-', capture_output=True, text=True).stdout
+  return f'comment={mark(source)}\n' in metadata
 
 
 def slide_index(lecture):

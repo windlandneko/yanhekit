@@ -1,6 +1,6 @@
 {
   "name": "yanhekit",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Yanhekt toolkit: download recordings and transcripts, extract slides from screen recordings, build slide PDFs, transcribe and embed subtitles, and maintain course notes.",
   "license": "AGPL-3.0-only",
   "author": {

@@ -20,7 +20,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 
 ORIGIN = 'https://aita.yanhekt.cn'
-CAMPUS_IP = '10.0.11.240'  # aita.yanhekt.cn inside the campus network
+CAMPUS_IP = '10.0.11.240'
 CONFIG = Path.home() / '.config' / 'yanhekit'
 USER_AGENT = (
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36'

@@ -26,7 +26,7 @@ Pick the workflow that fits the request. Notes are the product: transcripts only
     课件.pdf            slides
     slides/            index.json and numbered slides: 001.jpg, 002.jpg, …
     frames/            frames taken at given times: 教室-00-41-20.jpg, …
-    .cache/            transcript.tsv, audio.m4a, sheet-001-016.jpg
+    .cache/            transcript.tsv, sheet-001-016.jpg
 ```
 
 Commands take targets: a course folder stands for its lectures not dropped, and `--latest N` narrows it to the last N; a lecture folder stands for itself, and `download` and `query --fast-transcript` also take one not yet created, named `<course folder>/<lecture ID>` as `status` lists it. [references/files.md](references/files.md) gives the file formats and [references/notes.md](references/notes.md) the note templates.
@@ -44,7 +44,7 @@ Commands take targets: a course folder stands for its lectures not dropped, and 
 The default for a course or some of its lectures, with `C` the course folder. A rerun picks up new lectures and skips finished work.
 
 1. Survey the course with `query C --fast-transcript -m '点名|签到|作业|考试'`, which takes seconds.
-2. Drop empty lectures, such as holidays, cancelled classes or empty rooms: their fast transcripts have few or no segments, and reading a doubtful one with `query <lecture> --fast-transcript` settles it. List each in `课程总结.md` with its reason.
+2. Drop empty lectures, such as holidays, cancelled classes or empty rooms, with `drop <lecture> --reason <reason>`: their fast transcripts have few or no segments, and reading a doubtful one with `query <lecture> --fast-transcript` settles it. List each in `课程总结.md` with its reason.
 3. `download C --classroom --slides --transcribe` in the background.
 4. Fix recurring BCut errors with one `replace C -r <wrong> <right>...`. BCut turns course terms into homophones and garbles campus names: `延河课堂` is the lecture platform, `乐学` the learning platform and `i北理` the campus app built on 钉钉. Take the terms from the slides, grep the transcripts for their misheard forms, and fix the forms that recur and that the slides or context confirm; leave one-off errors and unclear phrases.
 5. `embed C`.
@@ -82,16 +82,16 @@ uv run <yanhekit> search [<keyword>] [--term 2024-2025-2] [--college 计算机�
 uv run <yanhekit> add <course>... [-o <workspace>]
 uv run <yanhekit> status [<course folder>...]
 uv run <yanhekit> download <target>... [--latest N] [--classroom] [--screen] [--slides] [--transcribe] [--overwrite]
-uv run <yanhekit> drop <lecture>...
+uv run <yanhekit> drop <lecture>... [--reason 国庆放假]
 ```
 
-`<course>` is a course ID or a coursedetail URL. `courses` and `search` print a course per line: ID, title, teacher, term and, for `search`, college. `search` matches titles and teacher names and returns one page of up to `--limit 100`, so narrow the keyword, term or college rather than paging. `add` and `status` list each lecture with what its folder holds; `status` stays offline and covers every course folder here by default.
+`<course>` is a course ID or a coursedetail URL. `courses` and `search` print a course per line: ID, title, teacher, term and, for `search`, college. `search` matches titles and teacher names and returns one page of up to `--limit 100`, so narrow the keyword, term or college rather than paging. `add` and `status` list each lecture with what its folder holds, such as `课件.pdf of 42 pages` or `classroom video with subtitles` for the current transcript, or why it was dropped; `status` stays offline and covers every course folder here by default.
 
-`download` refreshes the lecture list first. `--classroom` and `--screen` save those recordings. `--slides` extracts the slides from the screen recording, fetching it for the purpose and removing it afterwards unless `--screen` keeps it; downloads pause while two such recordings wait for extraction. `--transcribe` transcribes as `transcribe` does and needs a kept recording, usually `--classroom`. Slides and transcripts are made in two queues while the next lectures download. Existing files are kept unless you pass `--overwrite`, and an interrupted recording resumes.
+`download` refreshes the lecture list first. `--classroom` and `--screen` save those recordings. `--slides` extracts the slides from the screen recording, fetching it for the purpose and removing it afterwards unless `--screen` keeps it; downloads pause while two such recordings wait for extraction. `--transcribe` transcribes as `transcribe` does and needs a kept recording, usually `--classroom`. Slides and transcripts are made in two queues while the next lectures download. Existing files are kept unless you pass `--overwrite`, which redoes only the chosen resources, and an interrupted recording resumes.
 
 A recording is 2–3 GB, so run downloads of recordings and slides in the background. Each output line starts with the time and the lecture, a long step reports its progress at least every 10 seconds, and the run ends with a line per lecture on what it holds.
 
-`drop` deletes a lecture folder and marks it dropped, so its course folder passes over it; naming the lecture folder in `download` fetches it again.
+`drop` deletes a lecture folder and marks it dropped in `course.json` with its `--reason`, so its course folder passes over it; naming the lecture folder in `download` fetches it again.
 
 ### Transcripts
 
@@ -104,7 +104,7 @@ uv run <yanhekit> query <target>... [--latest N] [--fast-transcript] [-m 流水�
 
 `transcribe` uploads the sound track of each lecture's recording to Bilibili’s BCut service, one lecture at a time, and writes `字幕.txt`; lectures with a transcript are skipped. A recording from elsewhere works too, saved as `录播-教室.mp4` in a lecture folder of its own.
 
-`replace` applies the pairs in order to every transcript, prints the hits, and rewrites `字幕.txt`; check a wrong form that is also a real word with `query -m` first. `embed` replaces each recording with a copy whose only subtitle track is the transcript, or the .srt or .vtt `--file` given, without re-encoding, and skips recordings that already carry the current transcript.
+`replace` applies the pairs in order to every transcript, prints the hits, and rewrites `字幕.txt`; check a wrong form that is also a real word with `query -m` first. `embed` replaces each recording with a copy whose only subtitle track is the transcript, or the .srt or .vtt `--file` given, without re-encoding, and skips recordings that already carry the same subtitles, which it marks by their content.
 
 `query` prints the segments of the BCut transcript as `[00:02:30] text` lines. `--fast-transcript` fetches the platform's own transcript instead, online and in seconds for any lecture; it is rougher than BCut's, so it serves surveys and quick checks. `-m`/`--match` keeps the segments matching a regular expression in any case, so one call covers alternatives such as `点名|签到|考勤`; matching skips punctuation and fillers such as 嗯 and 啊, and a match may run on into the next two segments. Each lecture starts with a line giving its segment count, or why it has none, and each run of segments follows the slide then on screen, such as `slides/008.jpg`.
 
@@ -117,7 +117,7 @@ uv run <yanhekit> similar <target>... [--distance 12]
 uv run <yanhekit> pdf <lecture> [<slide>...]
 ```
 
-`frame` saves frames of a saved recording at the given times to `frames/`. `sheet` writes contact sheets of numbered, timed slides to `.cache/`; fewer columns give larger thumbnails, and the original slide shows small text and formulas. `similar` prints each group of near-identical slides on a line, such as `005@00:02:10 044@00:41:20`. `pdf` writes `课件.pdf` from the given slide numbers, such as `5` or `005`, in order, or from all of them.
+`frame` saves frames of a saved recording at the given times to `frames/`. `sheet` writes contact sheets of numbered, timed slides to `.cache/`; fewer columns give larger thumbnails, and the original slide shows small text and formulas. `similar` prints each group of near-identical slides on a line, such as `005@00:02:10 044@00:41:20`. `pdf` writes `课件.pdf` from the given slides in order, such as `5`, `005` or `1-4,7,9-12`, or from all of them, prints the slides it used, and deletes the sheets.
 
 `slides/` holds every screen the recording settled on, cropped to the slide where it can be found, including desktops, editing views, video playback and each step of a slide built up line by line. For a reviewed deck, go through the sheets and the similar groups, keep the clearest, most complete version of each slide in lecture order, usually the last step of a build-up, and pass the kept numbers to `pdf`. Check the page count and a few pages before delivering.
 

@@ -8,6 +8,7 @@
 #   'keyring>=25',
 #   'm3u8>=6',
 #   'numpy>=2',
+#   'pikepdf>=9',
 #   'pillow>=11',
 #   'pycryptodome>=3.23',
 #   'requests>=2.32',
@@ -29,6 +30,7 @@ import transcript
 from client import FAILURES, SORTS, Yanhekt, describe, upgrade_to_campus
 from workspace import (
   VIEWS,
+  carries,
   clock,
   count,
   course_folder,
@@ -69,7 +71,12 @@ def course_id(value):
 
 
 def slide(value):
-  return int(Path(value).stem)  # 44, 044.jpg or slides/044.jpg
+  """Slide numbers from 44, 044.jpg, slides/044.jpg, or ranges joined by commas: 5-9,12."""
+  numbers = []
+  for part in value.split(','):
+    first, _, last = part.partition('-')
+    numbers += range(int(Path(first).stem), int(Path(last or first).stem) + 1)
+  return numbers
 
 
 def pattern(value):
@@ -176,6 +183,7 @@ def parse():
   fetch.add_argument('--overwrite', action='store_true', help='Fetch selected resources again')
   empty = commands.add_parser('drop', help='Delete empty lectures and mark them dropped in course.json')
   empty.add_argument('lectures', nargs='+', type=absolute, help='Lecture folders')
+  empty.add_argument('--reason', help='Why, such as 国庆放假, kept in course.json')
 
   asr = commands.add_parser('transcribe', parents=[targets], help='Transcribe with BCut into 字幕.txt')
   asr.add_argument('--overwrite', action='store_true', help='Extract and transcribe again')
@@ -202,7 +210,7 @@ def parse():
   alike.add_argument('--distance', type=int, default=12, help='Most differing bits of 256 (default: 12)')
   combine = commands.add_parser('pdf', help='Write 课件.pdf, one slide per page')
   combine.add_argument('lecture', type=absolute)
-  combine.add_argument('slides', nargs='*', type=slide, metavar='slide', help='Slide numbers in page order')
+  combine.add_argument('slides', nargs='*', type=slide, metavar='slide', help='Slide numbers in page order, or 5-9,12')
   return parser.parse_args()
 
 
@@ -261,7 +269,7 @@ def main():
       raise SystemExit(f'{count(failed, "lecture")} incomplete')
   elif args.command == 'drop':
     for lecture in args.lectures:
-      drop(lecture)
+      drop(lecture, args.reason)
       print(f'{label(lecture)}: dropped')
 
   elif args.command == 'transcribe':
@@ -282,14 +290,14 @@ def main():
       'No recordings with a transcript; run `download --classroom` and `transcribe` first',
     )
     for lecture in found:
-      videos = [video for video in recordings(lecture).values() if args.file or not transcript.embedded(video, lecture)]
-      if not videos:
-        log(lecture, 'recordings already carry the transcript')
-        continue
+      source = args.file or timeline(lecture)
       subtitles = args.file.read_text(encoding='utf-8') if args.file else transcript.srt(lecture)
-      for video in videos:
-        transcript.embed(video, subtitles, None if args.file else timeline(lecture))
-        log(lecture, f'embedded subtitles in {video.name}')
+      for video in recordings(lecture).values():
+        if carries(video, source):
+          log(lecture, f'{video.name} already carries these subtitles')
+        else:
+          transcript.embed(video, subtitles, source)
+          log(lecture, f'embedded subtitles in {video.name}')
   elif args.command == 'query':
     found = fast_transcripts(args) if args.fast_transcript else transcripts(args)
     gap = False
@@ -326,8 +334,10 @@ def main():
   elif args.command == 'pdf':
     import slides
 
-    entries = slides.pick(args.lecture, args.slides)
-    print(f'{label(args.lecture)}: wrote {slides.write_pdf(args.lecture, entries).name}, {count(len(entries), "page")}')
+    entries = slides.pick(args.lecture, [n for numbers in args.slides for n in numbers])
+    pages = ' '.join(entry['file'].removesuffix('.jpg') for entry in entries)
+    print(f'{label(args.lecture)}: wrote {slides.write_pdf(args.lecture, entries).name} from slides {pages}')
+    print(f'{label(args.lecture)}: check these against the slides you chose, then open a few pages to confirm')
 
 
 if __name__ == '__main__':

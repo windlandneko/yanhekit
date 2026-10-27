@@ -40,7 +40,7 @@ Lecture notes go in `<course>/<id>/笔记.md`, the course summary in `<course>/�
 ### 复习与自测
 ```
 
-Link only files that exist; without a PDF, point the PPT line at `slides/`. Under 内容笔记, follow the lecture's main line with its terms, timestamps, slide and frame links.
+Link only files that exist; without a PDF, point the PPT line at `slides/`. Under 内容笔记, follow the lecture's main line with its terms, timestamps, slide and frame links. When the content does not fit 概念与公式 and 例题与推导, replace those two with one `###` heading per main topic, named after it and alike across similar lectures, and keep 复习与自测 last.
 
 ## Course
 
