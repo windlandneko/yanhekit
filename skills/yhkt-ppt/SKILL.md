@@ -1,6 +1,6 @@
 ---
 name: yhkt-ppt
-description: 从屏幕录像提取 PPT，整理成课件 PDF
+description: 提取 PPT：从屏幕录像截图并清洗重排，整理成 PDF
 argument-hint: "<课程名、ID 或链接> [课次]"
 disable-model-invocation: true
 ---

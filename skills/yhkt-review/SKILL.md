@@ -1,6 +1,6 @@
 ---
 name: yhkt-review
-description: 基于课程笔记生成复习提纲和自测题
+description: 复习：基于课程笔记生成复习提纲和自测题
 argument-hint: "<课程名> [范围、重点或额外要求]"
 disable-model-invocation: true
 ---
